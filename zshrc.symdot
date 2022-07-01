@@ -1,0 +1,94 @@
+POWERLEVEL9K_DISABLE_CONFIGURATION_WIZARD=true
+
+# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
+# Initialization code that may require console input (password prompts, [y/n]
+# confirmations, etc.) must go above this block; everything else may go below.
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
+# Set the location of the dotfiles to ~/.dotfiles or the path contained within
+# that file
+if [ -d "$HOME/.dotfiles" ]; then
+    DOTFILES="$HOME/.dotfiles"
+elif [ -f "$HOME/.dotfiles" ]; then
+    read -r DOTFILES < "$HOME/.dotfiles"
+else
+    echo "Could not determine path for \$DOTFILES"
+    exit 1
+fi
+export DOTFILES
+
+source "$DOTFILES/shell/.aliases.sh"
+
+source-compiled() {
+  pluginzsh="$1"
+  if [[ ! "${pluginzsh}.zwc" -nt "${pluginzsh}" ]]; then
+    zcompile "${pluginzsh}"
+  fi
+  source "${pluginzsh}"
+}
+
+eval "$(/opt/homebrew/bin/brew shellenv)"
+export PATH="$PATH:$HOME/.local/bin"
+
+export EDITOR="nvim"
+export NOTES_DIR="$HOME/projects/notes-vault"
+
+# stty -ixon # get rid of frozen vim ctrl-s
+
+# ls with color
+zstyle ':completion:*' list-colors "${(@s.:.)LS_COLORS}"
+autoload -Uz compinit
+compinit
+
+SAVEHIST=50000
+HISTFILE=~/.zsh_history
+bindkey -v
+bindkey "^R" history-incremental-search-backward
+
+# Automatically enter directories without using cd
+setopt auto_cd
+# Allow comments even in interactive shells
+setopt interactive_comments
+# Allow completion from within a word/phrase
+setopt complete_in_word
+# When completing from the middle of a word, move the cursor to the end of the word
+setopt always_to_end
+# Enable expansion of lots of things at the prompt
+setopt prompt_subst
+# Get rid of beeping
+unsetopt beep
+# extended globbing
+setopt extended_glob
+
+# HISTORY
+HISTSIZE=100000
+SAVEHIST=100000
+HISTORY_IGNORE="(ls|ll|bg|fg|history*)"
+# Add commands as they are typed, don't wait until shell exit -- not needed when share_history
+# setopt inc_append_history
+# Include more information about when the command was executed, etc
+setopt extended_history
+# Do not write events to history that are duplicates of previous events
+setopt hist_ignore_dups
+# When searching history don't display results already cycled through twice
+setopt hist_find_no_dups
+# Remove extra blanks from each command line being added to history
+setopt hist_reduce_blanks
+# share history between zsh sessions
+setopt share_history
+
+# magic stuff to make urls get quoted automatically and not trigger extended_glob
+autoload -Uz bracketed-paste-url-magic
+zle -N bracketed-paste bracketed-paste-url-magic
+
+source ~/.zsh-plugins/powerlevel10k/powerlevel10k.zsh-theme
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f $DOTFILES/zsh/.p10k.zsh ]] || source $DOTFILES/zsh/.p10k.zsh
+
+source-compiled ~/.zsh-plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
+source-compiled ~/.zsh-plugins/zsh-completions/zsh-completions.plugin.zsh
+source-compiled ~/.zsh-plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh
+
+# eval "fortune | cowsay -f stegosaurus"
